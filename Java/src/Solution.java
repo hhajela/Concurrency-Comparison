@@ -15,9 +15,19 @@ public class Solution {
 			  {0,0,0,0,8,0,0,7,9}
 			};
 	SodukoSolver sk = new SodukoSolver(board,9);
-	sk.solve();
-	
-
+	Cell[][] local = new Cell[9][9];
+	local = sk.getboard();
+	local = sk.getCopy(local);
+	Cell[][] sol = sk.solve(local);
+	System.out.println("Soduko Solved");
+	for(int i=0;i<9;i++)
+		{for(int j=0;j<9;j++)
+			{
+			System.out.print(sol[i][j].getIntValue()+" ");
+			}
+			System.out.print("\n");
+		}
 	}
+	
 
 }

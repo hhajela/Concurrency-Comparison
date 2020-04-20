@@ -3,6 +3,7 @@ import java.util.*;
 public class Cell {
  private int row;
  private int col;
+ private int intValue;
  private boolean value = false;
  ArrayList<Integer> potentialValues;
  
@@ -10,10 +11,32 @@ public class Cell {
  	{
  		row=_row;
  		col=_col;
+ 		intValue=0;
  		potentialValues = new ArrayList();
  	}
  	
- 	public void add(int v)
+ 	public void setIntValue(int v)
+ 	{
+ 		this.intValue = v;
+ 	}
+ 	
+ 	public int getIntValue()
+ 	{
+ 		return this.intValue;
+ 	}
+ 	
+ 	
+ 	public ArrayList<Integer> getPV()
+ 	{
+ 		return potentialValues;
+ 	}
+ 	
+ 	public void setPV(ArrayList<Integer> p)
+ 	{
+ 		this.potentialValues = p;
+ 	}
+
+	public void add(int v)
  	{
  		potentialValues.add(v);
  	}
@@ -55,8 +78,13 @@ public class Cell {
  	}
  	
  	//Should only be used for fixed cell
- 	public int getPotentialValues()
+ 	public int getFirstPotentialValue()
  	{
  		return this.potentialValues.get(0);
+ 	}
+ 	
+ 	public int getPotentialValue(int i)
+ 	{
+ 		return this.potentialValues.get(i);
  	}
 }
