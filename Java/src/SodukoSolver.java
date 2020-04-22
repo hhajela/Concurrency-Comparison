@@ -1,194 +1,192 @@
 import java.util.*;
 import java.lang.*;
-public class SodukoSolver {
+public class SodukoSolver implements Runnable {
 	
-	private Cell[][] board;
-	private int size;
-	private int smallGridSize;
+	private static Stack<Cell[][]> processingSolution=new Stack();
 	
-	SodukoSolver(int[][] board,int n)
+	private static Cell[][] result;
+	private BoardHelper bHelper;
+	private static int totalThread;
+	private static int threadWaiting=0;
+	
+	 
+	
+	public SodukoSolver(int t)
 	{
-		this.size =n;
-		this.smallGridSize =(int) Math.sqrt(n);
 		
-		this.board =new Cell[size][size];
-		
-		for(int i=0;i<size;i++)
-			for(int j=0;j<size;j++)
-			{
-				this.board[i][j]=new Cell(i,j);
-				if(board[i][j]==0)
-				{
-					for(int k=1;k<=size;k++)
-						this.board[i][j].add(k);
-					
-				}
-				else
-				{
-					this.board[i][j].add(board[i][j]);
-					this.board[i][j].setValue();
-					this.board[i][j].setIntValue(board[i][j]);
-					
-				}
-					
-			}
-		reduce(board);
+		bHelper = new BoardHelper();
+		totalThread = t;
+		result=null;
 		
 		
 	}
 	
-	public void reduce(int[][] grid)
+	public Cell[][] getResult()
 	{
-		for(int i=0;i<size;i++)
-			for(int j=0;j<size;j++)
-			{
-				if(grid[i][j]!=0)
-				{
-					// This will remove the values for the whole column and rows
-					for(int k=0;k<size;k++)
-					{
-						if(!this.board[i][k].isSet())
-							
-							{this.board[i][k].remove(grid[i][j]);
-							//System.out.println("Removing "+grid[i][j]+" from "+i+" "+k+" Rowise");
-							}
-						if(!this.board[k][j].isSet())
-							{
-							this.board[k][j].remove(grid[i][j]);
-							//System.out.println("Removing "+grid[i][j]+" from+ "+k+" "+j+" Colwise");
-							}
-					}
-					int gridrow = (i/smallGridSize)*smallGridSize;
-					int gridcol =(j/smallGridSize)*smallGridSize;
-					//This will remove the values for the respective grid
-					for(int k=gridrow;k<gridrow+smallGridSize;k++)
-						for(int l=gridcol;l<gridcol+smallGridSize;l++)
-						{
-							if(!this.board[k][l].isSet())
-								{
-								this.board[k][l].remove(grid[i][j]);
-								//System.out.println("Removing "+grid[i][j]+"from+ "+k+" "+l+" Gridwise");
-								}
-						}
-				}
-				
-			}
-		
+		return result;
 	}
 	
-	
-	public boolean isSolved(Cell[][] cell)
+	public boolean checkResult()
 	{
+		return (result!=null);
+	}
+	
+	public synchronized void increaseWatingThread()
+	{
+		System.out.println(Thread.currentThread().getName()+" is waiting");
+		threadWaiting++;
+	}
+	
+	public synchronized void reduceWaitingThread()
+	{
+		threadWaiting--;
+		System.out.println(Thread.currentThread().getName()+" has assignment");
+	}
+	
+	public boolean isSolved(Cell[][] board)
+	{
+		int size = board.length;
 		for(int i=0;i<size;i++)
 			for(int j=0;j<size;j++)
-				if(!cell[i][j].isSet())
+				if(!board[i][j].isSet())
 					return false;
 		return true;
 	}
 	
-		
-	public boolean isValid(Cell[][] intermediateCell)
+	public boolean checkPotentialNotEmpty(Cell[][] board)
 	{
+		int size = board.length;
 		for(int i=0;i<size;i++)
 			for(int j=0;j<size;j++)
-				if(!intermediateCell[i][j].isSet()&&intermediateCell[i][j].getPotentialValuesSize()==1)
+				if(board[i][j].getPotentialValuesSize()==0)
+					return false;
+		return true;
+			
+		
+	}
+	
+		
+	public boolean isValid(Cell[][] board)
+	{
+		int size = board.length;
+		for(int i=0;i<size;i++)
+			for(int j=0;j<size;j++)
+				if(!board[i][j].isSet()&&board[i][j].getPotentialValuesSize()==1)
 					{
-					//intermediateCell[i][j].setValue();
-					//intermediateCell[i][j].setIntValue(intermediateCell[i][j].getFirstPotentialValue());
-					//System.out.println("Setting "+intermediateCell[i][j].getFirstPotentialValue()+" for "+i+" "+j);
-					reduceWithIndex(intermediateCell[i][j],intermediateCell[i][j].getFirstPotentialValue(),intermediateCell);
+					reduceWithIndex(board[i][j],board[i][j].getFirstPotentialValue(),board);
 					}
 		
-		SodukoValidator sv = new SodukoValidator(intermediateCell,size);
+		SodukoValidator sv = new SodukoValidator(board,size);
 		
-		return sv.validate();
+		return (checkPotentialNotEmpty(board)&&sv.validate());
 	}
 	
-	
-	public Cell[][] getboard()
+	public synchronized void addToStack(Cell[][] board)
 	{
-		return this.board;
+		processingSolution.push(board);
 	}
 	
-	public Cell[][] solve(Cell[][] localBoard)
+	public synchronized Cell[][] RemoveFromStack()
 	{
+		while(processingSolution.empty())
+			{
+			System.out.println(Thread.currentThread().getName()+" is waiting inside RemoveFromStack");
+			continue;
+			}
+		return this.processingSolution.pop();
+	}
+	
+	@Override
+	public void run() {
 		
-		//printBoard(localBoard);
-		if(isSolved(localBoard))
-			return localBoard;
 		
-		Cell selectedCell = minSelectCell(localBoard);
-		System.out.print("Minimum Selected ");
-		selectedCell.print();
-		for(int i=0;i<selectedCell.getPotentialValuesSize();i++)
-		{	System.out.println("Trying value "+selectedCell.getPotentialValue(i)+" for "+selectedCell.getRow()+" "+selectedCell.getCol());
+		try
+		{
+		while(!processingSolution.empty()||threadWaiting<totalThread)
+		{	if(processingSolution.empty())
+			{
+				
+				increaseWatingThread();
+				
+				synchronized(this)
+				{
+				while(processingSolution.empty())
+				{
+					if(threadWaiting<totalThread)
+						continue;
+					else
+						return;
+				}
+				
+				reduceWaitingThread();
+				}
+			}
 			
+			Cell[][] board = RemoveFromStack();
+		
+		
+		
+			if(isSolved(board))
+				{
+				result = board;
+				}
+			
+			if(checkResult())
+			{	
+				return;
+			}
+			Cell selectedCell = minSelectCell(board);
+		//System.out.print(Thread.currentThread().getName()+" ");
+		//System.out.print("Minimum Selected ");	
+		//selectedCell.print();
+		for(int i=0;i<selectedCell.getPotentialValuesSize();i++)
+		{	//System.out.println("Trying value "+selectedCell.getPotentialValue(i)+" for "+selectedCell.getRow()+" "+selectedCell.getCol());
+		
 			//next_grid = localBoard;
-			Cell[][] next_grid = getCopy(localBoard);
+			Cell[][] next_grid = bHelper.getCopy(board);
 			next_grid = reduceWithIndex(selectedCell,selectedCell.getPotentialValue(i),next_grid);
 			//printBoard(next_grid);
-			printValueBoard(next_grid);
+			//printValueBoard(next_grid);
 			if(isValid(next_grid))
-			{ Cell[][] sol =solve(next_grid);
-				 if(isSolved(sol))
-				 	return sol;
-				 else
-					 continue;
+			{ 	
+				addToStack(next_grid);
+				
 			}
 		}
-		return localBoard;
-		
-		
-			
-		
 	}
-	
-	@SuppressWarnings("unchecked")
-	public Cell[][] getCopy(Cell[][] board)
-	{
-		Cell[][] local = new Cell[size][size];
+		}
 		
-		for(int i=0;i<size;i++)
-			for(int j=0;j<size;j++)
-				{
-				local[i][j]= new Cell(board[i][j].getRow(),board[i][j].getCol());
-				local[i][j].setPV((ArrayList<Integer>) board[i][j].getPV().clone());
-				if(board[i][j].isSet())
-					local[i][j].setValue();
-				local[i][j].setIntValue(board[i][j].getIntValue());
-				}
-		
-		return local;
-		
+	catch(Exception e)
+		{
+		System.out.println("In the exception block" +Thread.currentThread().getName());
+		e.printStackTrace();
+		}
 	}
+		
 	
-	public void printBoard(Cell[][] board)
-	{
-		for(int i=0;i<size;i++)
-			for(int j=0;j<size;j++)
-				board[i][j].print();
-	}
 	
-	public Cell[][] reduceWithIndex(Cell selectedcell, int value, Cell[][] intermediateCell)
+	
+	public Cell[][] reduceWithIndex(Cell selectedcell, int value, Cell[][] board)
 	{
 		int i = selectedcell.getRow();
 		int j = selectedcell.getCol();
 		
-		intermediateCell[i][j].setValue();
-		intermediateCell[i][j].setIntValue(value);
-		
+		board[i][j].setValue();
+		board[i][j].setIntValue(value);
+		int size = board.length;
+		int smallGridSize = (int) Math.sqrt(size);
 		
 		
 		// This will remove the values for the whole column and rows
 		for(int k=0;k<size;k++)
 		{
-			if(!intermediateCell[i][k].isSet())
+			if(!board[i][k].isSet())
 				{
-				intermediateCell[i][k].remove(value);
+				board[i][k].remove(value);
 				//System.out.println("Removing "+value+"from+ "+i+" "+k+" Rowwise");
 				}
-			if(!intermediateCell[k][j].isSet())
-				{intermediateCell[k][j].remove(value);
+			if(!board[k][j].isSet())
+				{board[k][j].remove(value);
 				//System.out.println("Removing "+value+"from+ "+k+" "+j+" Colwise");
 				}
 				
@@ -199,42 +197,42 @@ public class SodukoSolver {
 		for(int k=gridrow;k<gridrow+smallGridSize;k++)
 			for(int l=gridcol;l<gridcol+smallGridSize;l++)
 				{
-					if(!intermediateCell[k][l].isSet())
+					if(!board[k][l].isSet())
 						{
-						intermediateCell[k][l].remove(value);
+						board[k][l].remove(value);
 						//System.out.println("Removing "+value+"from+ "+k+" "+l+" Gridwise");
 						}
 				}
 				
-		return intermediateCell;
+		return board;
 		
 	}
 	
-	public void printValueBoard(Cell[][] board)
+		
+	public Cell minSelectCell(Cell[][] board)
 	{
-		for(int i=0;i<size;i++)
-		{for(int j=0;j<size;j++)
-			{
-			System.out.print(board[i][j].getIntValue()+" ");
-			}
-			System.out.print("\n");
-		}
-	}
-	
-	public Cell minSelectCell(Cell[][] cell)
-	{
+		int size = board.length;
+		
 		int minPossibility = size+1;
 		Cell selectedCell=new Cell(0,0);
 		for(int i=0;i<size;i++)
 			for(int j=0;j<size;j++)
 			{
-				if(!cell[i][j].isSet()&&cell[i][j].getPotentialValuesSize()<minPossibility)
+				if(!board[i][j].isSet()&&board[i][j].getPotentialValuesSize()<minPossibility)
 				{
-					minPossibility = cell[i][j].getPotentialValuesSize();
-					selectedCell = cell[i][j];
+					minPossibility = board[i][j].getPotentialValuesSize();
+					selectedCell = board[i][j];
 							
 				}
 			}
 		return selectedCell;
 	}
+
+
+
+	
+
+
+
+	
 }
