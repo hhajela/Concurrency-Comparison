@@ -1,5 +1,9 @@
 import java.util.ArrayList;
 
+/*
+ * 
+ * Board class takes argument as simple 2d matirc and intialize 2d cell matrix with it.
+ * */
 public class Board {
 	
 	private Cell[][] board;
@@ -37,7 +41,7 @@ public class Board {
 		
 		
 	}
-	
+	//Function update the potential list of the cell based on Soduko's contraints
 	public void reduce(int[][] grid)
 	{
 		for(int i=0;i<size;i++)
@@ -77,17 +81,19 @@ public class Board {
 		
 	}
 	
-	
+	//Return the board
 	public Cell[][] getBoard()
 	{
 		return this.board;
 	}
 	
+	//Return the size of the grid
 	public int getSize()
 	{
 		return size;
 	}
 	
+	//Return the size of sub grid
 	public int getSmallGridSize()
 	{
 		return this.smallGridSize;

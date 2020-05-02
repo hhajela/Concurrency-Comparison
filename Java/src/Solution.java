@@ -29,7 +29,9 @@ public class Solution {
 	BoardHelper bHelper = new BoardHelper();
 	Cell[][] local = bHelper.getCopy(board.getBoard());
 	
-	int numOfThread = 4;
+	
+	//Variable for number of thread
+	int numOfThread = 7;
 	SodukoSolver[] sk = new SodukoSolver[numOfThread];
 	//
 	Thread[] thread = new Thread[numOfThread];
