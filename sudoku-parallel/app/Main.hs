@@ -3,8 +3,6 @@ module Main where
 import System.Environment
 import Sudoku
 import Data.Maybe
-import Data.Map
-import qualified Data.Map as Map
 import Control.DeepSeq
 import Control.Exception
 import Control.Parallel.Strategies
