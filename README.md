@@ -7,3 +7,9 @@ Analysis and comparison of application performance in use cases involving heavy 
 
 For changing the thread count on Java application, please change "numOfThread" variable in solution.java
 
+For running the Haskell application run the following commands from the haskell implementation root directory :-
+
+1. stack build
+2. stack exec sudoku-parallel-exe -- input.txt +RTS -N2 -s
+
+
