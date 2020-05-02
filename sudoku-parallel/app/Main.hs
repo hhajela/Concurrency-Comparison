@@ -3,6 +3,8 @@ module Main where
 import System.Environment
 import Sudoku
 import Data.Maybe
+import Data.Map
+import qualified Data.Map as Map
 import Control.DeepSeq
 import Control.Exception
 import Control.Parallel.Strategies
@@ -12,10 +14,12 @@ main :: IO ()
 main = do
   f : [] <- getArgs
   file       <- readFile f
-  let problems   = lines file
-      solutions = soln problems
-
-  print (length (filter isJust solutions))
+  let problems = lines file
+  let solutions = soln problems
+  let mx = head solutions
+  case mx of
+        Nothing -> putStrLn "Failed to find a solution"
+        Just x -> putStrLn "Succeeded"
 
 
 

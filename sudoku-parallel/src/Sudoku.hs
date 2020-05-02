@@ -1,3 +1,8 @@
+module Sudoku
+    ( solve
+    , GridValues
+    ) where
+
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Set (Set)
