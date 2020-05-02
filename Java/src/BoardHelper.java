@@ -1,5 +1,13 @@
 import java.util.ArrayList;
 
+
+/*
+ * 
+ * 
+ * This class is helper for board class
+ * 
+ * 
+ * */
 public class BoardHelper {
 
 	
@@ -7,6 +15,8 @@ public class BoardHelper {
 	{
 		
 	}	
+	
+		//This function return deep copy of the board
 		@SuppressWarnings("unchecked")
 		public Cell[][] getCopy(Cell[][] board)
 		{
@@ -27,6 +37,10 @@ public class BoardHelper {
 			
 		}
 		
+		/*
+		 * This function print the row and column for the cell and the potential values for it
+		 * 
+		 * */
 		public void printBoard(Cell[][] board)
 		{
 			int size = board.length;
@@ -36,6 +50,11 @@ public class BoardHelper {
 					board[i][j].print();
 		}
 		
+		/*
+		 * 
+		 *This function print the board which is passed to it 
+		 * 
+		 */
 		public void printValueBoard(Cell[][] board)
 		{
 			int size = board.length;

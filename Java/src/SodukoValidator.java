@@ -1,4 +1,9 @@
 import java.util.*;
+
+/*
+ * 
+ * Class to check if the soduko is valid or not
+ * */
 public class SodukoValidator {
 
 	private int[][] board;
@@ -25,6 +30,8 @@ public class SodukoValidator {
 			
 	}
 	
+	// Method which checks the constraint for the soduko problem
+	//If there are repeating number for a row , column or sub grid it will return false 
 	public boolean validate()
 	{
 		for(int i=0;i<size;i++)

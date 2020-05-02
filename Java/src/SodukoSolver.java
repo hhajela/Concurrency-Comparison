@@ -1,5 +1,11 @@
 import java.util.*;
 import java.lang.*;
+
+/*
+ * 
+ * This class solves the soduko problem using CSP algorithm
+ * Implements runnable for running it as multithreading solution
+ * */
 public class SodukoSolver implements Runnable {
 	
 	private static Stack<Cell[][]> processingSolution=new Stack();
@@ -21,28 +27,34 @@ public class SodukoSolver implements Runnable {
 		
 	}
 	
+	//Function which returns final result
 	public Cell[][] getResult()
 	{
 		return result;
 	}
 	
+	//Check if some thread found the solutiotn
 	public boolean checkResult()
 	{
 		return (result!=null);
 	}
 	
+	//Increase the count of number of waiting thread
 	public synchronized void increaseWatingThread()
 	{
 		System.out.println(Thread.currentThread().getName()+" is waiting");
 		threadWaiting++;
 	}
 	
+	//Decrease the count of number of waiting thread
 	public synchronized void reduceWaitingThread()
 	{
 		threadWaiting--;
 		System.out.println(Thread.currentThread().getName()+" has assignment");
 	}
 	
+	
+	//Check if the grid is already solved
 	public boolean isSolved(Cell[][] board)
 	{
 		int size = board.length;
@@ -53,6 +65,7 @@ public class SodukoSolver implements Runnable {
 		return true;
 	}
 	
+	//Check after the updating the grid, if there is a cell with no possible solution
 	public boolean checkPotentialNotEmpty(Cell[][] board)
 	{
 		int size = board.length;
@@ -65,15 +78,17 @@ public class SodukoSolver implements Runnable {
 		
 	}
 	
-		
+	//Check if the grid is still valid based on soduko solution
 	public boolean isValid(Cell[][] board)
 	{
 		int size = board.length;
+		
+		//Loop to set values for the cell which have only one possible solution left
 		for(int i=0;i<size;i++)
 			for(int j=0;j<size;j++)
 				if(!board[i][j].isSet()&&board[i][j].getPotentialValuesSize()==1)
 					{
-					reduceWithIndex(board[i][j],board[i][j].getFirstPotentialValue(),board);
+					reduceWithIndex(board[i][j],board[i][j].getPotentialValue(0),board);
 					}
 		
 		SodukoValidator sv = new SodukoValidator(board,size);
@@ -81,13 +96,16 @@ public class SodukoSolver implements Runnable {
 		return (checkPotentialNotEmpty(board)&&sv.validate());
 	}
 	
+	//Function which add new grid to stack
 	public synchronized void addToStack(Cell[][] board)
 	{
 		processingSolution.push(board);
 	}
 	
+	//Function which remove grid from stack
 	public synchronized Cell[][] RemoveFromStack()
 	{
+		
 		while(processingSolution.empty())
 			{
 			System.out.println(Thread.currentThread().getName()+" is waiting inside RemoveFromStack");
@@ -102,14 +120,19 @@ public class SodukoSolver implements Runnable {
 		
 		try
 		{
+			//Will continue either if the stack has some element or thread still some thread working on the problem
 		while(!processingSolution.empty()||threadWaiting<totalThread)
-		{	if(processingSolution.empty())
+		{	
+			//If stack is empty increase the waiting thread
+			if(processingSolution.empty())
 			{
 				
 				increaseWatingThread();
 				
+				
 				synchronized(this)
 				{
+					// This is to make thread wait for new grid to be pushed to the stack
 				while(processingSolution.empty())
 				{
 					if(threadWaiting<totalThread)
@@ -122,10 +145,11 @@ public class SodukoSolver implements Runnable {
 				}
 			}
 			
+			//Assigning work to thread
 			Cell[][] board = RemoveFromStack();
 		
 		
-		
+			//
 			if(isSolved(board))
 				{
 				result = board;
@@ -165,7 +189,8 @@ public class SodukoSolver implements Runnable {
 		
 	
 	
-	
+	//This function set the value of the minimum selected cell and update the other
+	//by removing the set value from their potential list
 	public Cell[][] reduceWithIndex(Cell selectedcell, int value, Cell[][] board)
 	{
 		int i = selectedcell.getRow();
@@ -208,7 +233,7 @@ public class SodukoSolver implements Runnable {
 		
 	}
 	
-		
+	//Function which finds the cell which has minimum possible solution left	
 	public Cell minSelectCell(Cell[][] board)
 	{
 		int size = board.length;
