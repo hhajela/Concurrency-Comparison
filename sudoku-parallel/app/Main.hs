@@ -21,6 +21,15 @@ main = do
         Nothing -> putStrLn "Failed to find a solution"
         Just x -> putStrLn "Succeeded"
 
+parEval :: [String] -> [Maybe Sudoku.GridValues]
+parEval puzzles =
+  let (as,bs) = splitAt (length puzzles `div` 2) puzzles in
+    runEval $ do
+        as' <- rpar (force (map solve as))
+        bs' <- rpar (force (map solve bs))
+        rseq as'
+        rseq bs'
+        return (as' ++ bs')
 
 
 parallelMap :: (a -> b) -> [a] -> Eval [b]
